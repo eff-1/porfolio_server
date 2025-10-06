@@ -21,7 +21,11 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? ['https://your-portfolio.vercel.app', 'https://your-custom-domain.com']
+    ? [
+        process.env.CLIENT_URL_PROD || 'https://your-portfolio.vercel.app',
+        'https://portfolio-project-frontend.vercel.app',
+        /\.vercel\.app$/
+      ]
     : ['http://localhost:5173', 'http://localhost:3000'],
   credentials: true
 }));
@@ -110,12 +114,30 @@ const validateContactForm = (req, res, next) => {
 // Routes
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime()
-  });
+app.get('/api/health', async (req, res) => {
+  try {
+    // Test Supabase connection
+    const { data, error } = await supabase
+      .from('contact_messages')
+      .select('count')
+      .limit(1);
+    
+    res.json({
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: error ? 'ERROR' : 'CONNECTED',
+      environment: process.env.NODE_ENV || 'development'
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'ERROR',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      database: 'ERROR',
+      error: error.message
+    });
+  }
 });
 
 // Contact form endpoint
