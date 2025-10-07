@@ -323,7 +323,7 @@ app.use((error, req, res, next) => {
     details: 'Something went wrong on our end.'
   });
 });
-app.use('*', (req, res) => {
+app.all('*', (req, res) => {
   res.status(404).json({
     error: 'Endpoint not found',
     details: `The requested endpoint ${req.originalUrl} does not exist.`
