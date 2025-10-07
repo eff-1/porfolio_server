@@ -24,10 +24,13 @@ app.use(cors({
     ? [
         process.env.CLIENT_URL_PROD || 'https://your-portfolio.vercel.app',
         'https://portfolio-project-frontend.vercel.app',
+        'https://haftech.vercel.app',
         /\.vercel\.app$/
       ]
-    : ['http://localhost:5173', 'http://localhost:3000'],
-  credentials: true
+    : ['http://localhost:5173', 'http://localhost:3000', 'http://127.0.0.1:5173'],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -112,6 +115,19 @@ const validateContactForm = (req, res, next) => {
 };
 
 // Routes
+
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Portfolio Backend API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      contact: '/api/contact',
+      admin: '/api/admin/messages'
+    }
+  });
+});
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
@@ -307,7 +323,7 @@ app.use((error, req, res, next) => {
     details: 'Something went wrong on our end.'
   });
 });
-app.use(/.*/, (req, res) => {
+app.use('*', (req, res) => {
   res.status(404).json({
     error: 'Endpoint not found',
     details: `The requested endpoint ${req.originalUrl} does not exist.`
