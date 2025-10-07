@@ -216,89 +216,94 @@ app.post('/api/contact', contactLimiter, validateContactForm, async (req, res) =
       });
     }
 
-    // Send email notification
-    try {
-      const transporter = createEmailTransporter();
-      
-      // Email to admin (you)
-      const adminMailOptions = {
-        from: process.env.SMTP_FROM,
-        to: process.env.ADMIN_EMAIL,
-        subject: `New Contact Form Submission: ${subject}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #4361ee;">New Contact Form Submission</h2>
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <p><strong>Name:</strong> ${name}</p>
-              <p><strong>Email:</strong> ${email}</p>
-              <p><strong>Subject:</strong> ${subject}</p>
-              <p><strong>Time:</strong> ${new Date(timestamp).toLocaleString()}</p>
-              <p><strong>IP:</strong> ${clientIp}</p>
-            </div>
-            <div style="background: #fff; padding: 20px; border-left: 4px solid #4361ee;">
-              <h3>Message:</h3>
-              <p style="white-space: pre-wrap;">${message}</p>
-            </div>
-            <p style="color: #666; font-size: 12px; margin-top: 20px;">
-              This message was sent from your portfolio contact form.
-            </p>
-          </div>
-        `
-      };
-      
-      // Auto-reply to user
-      const userMailOptions = {
-        from: process.env.SMTP_FROM,
-        to: email,
-        subject: `Thank you for contacting HafTech - ${subject}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #4361ee;">Thank You for Your Message!</h2>
-            <p>Hi ${name},</p>
-            <p>Thank you for reaching out to us. I've received your message about "<strong>${subject}</strong>" and will get back to you within 24 hours.</p>
-            
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3>Your Message Summary:</h3>
-              <p><strong>Subject:</strong> ${subject}</p>
-              <p><strong>Sent:</strong> ${new Date(timestamp).toLocaleString()}</p>
-            </div>
-            
-            <p>In the meantime, feel free to:</p>
-            <ul>
-              <li>Check out my <a href="https://your-portfolio.vercel.app/#portfolio" style="color: #4361ee;">latest projects</a></li>
-              <li>Connect with me on <a href="https://wa.me/+2348128653553" style="color: #25d366;">WhatsApp</a> for immediate assistance</li>
-              <li>Follow me on <a href="https://linkedin.com/in/haftech" style="color: #0077b5;">LinkedIn</a></li>
-            </ul>
-            
-            <p>Looking forward to discussing your project!</p>
-            
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-              <p><strong>Ariyo Faruq</strong><br>
-              CEO & Founder, HafTech<br>
-              <a href="mailto:contact@haftech.com" style="color: #4361ee;">contact@haftech.com</a><br>
-              <a href="tel:+2348128653553" style="color: #4361ee;">+234 8128 653 553</a></p>
-            </div>
-          </div>
-        `
-      };
-      
-      // Send both emails
-      await Promise.all([
-        transporter.sendMail(adminMailOptions),
-        transporter.sendMail(userMailOptions)
-      ]);
-      
-    } catch (emailError) {
-      console.error('Email error:', emailError);
-      // Don't fail the request if email fails, message is already stored
-    }
-
+    // Send success response immediately
     res.status(200).json({
       success: true,
       message: 'Message received successfully! I\'ll get back to you soon.',
       data: {
         id: data[0].id,
         timestamp: timestamp
+      }
+    });
+
+    // Send email notification in background (don't await)
+    setImmediate(async () => {
+      try {
+        const transporter = createEmailTransporter();
+        
+        // Email to admin (you)
+        const adminMailOptions = {
+          from: process.env.SMTP_FROM,
+          to: process.env.ADMIN_EMAIL,
+          subject: `New Contact Form Submission: ${subject}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #4361ee;">New Contact Form Submission</h2>
+              <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <p><strong>Name:</strong> ${name}</p>
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Subject:</strong> ${subject}</p>
+                <p><strong>Time:</strong> ${new Date(timestamp).toLocaleString()}</p>
+                <p><strong>IP:</strong> ${clientIp}</p>
+              </div>
+              <div style="background: #fff; padding: 20px; border-left: 4px solid #4361ee;">
+                <h3>Message:</h3>
+                <p style="white-space: pre-wrap;">${message}</p>
+              </div>
+              <p style="color: #666; font-size: 12px; margin-top: 20px;">
+                This message was sent from your portfolio contact form.
+              </p>
+            </div>
+          `
+        };
+        
+        // Auto-reply to user
+        const userMailOptions = {
+          from: process.env.SMTP_FROM,
+          to: email,
+          subject: `Thank you for contacting HafTech - ${subject}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #4361ee;">Thank You for Your Message!</h2>
+              <p>Hi ${name},</p>
+              <p>Thank you for reaching out to us. I've received your message about "<strong>${subject}</strong>" and will get back to you within 24 hours.</p>
+              
+              <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3>Your Message Summary:</h3>
+                <p><strong>Subject:</strong> ${subject}</p>
+                <p><strong>Sent:</strong> ${new Date(timestamp).toLocaleString()}</p>
+              </div>
+              
+              <p>In the meantime, feel free to:</p>
+              <ul>
+                <li>Check out my <a href="https://haftech.vercel.app/#portfolio" style="color: #4361ee;">latest projects</a></li>
+                <li>Connect with me on <a href="https://wa.me/+2348128653553" style="color: #25d366;">WhatsApp</a> for immediate assistance</li>
+                <li>Follow me on <a href="https://linkedin.com/in/haftech" style="color: #0077b5;">LinkedIn</a></li>
+              </ul>
+              
+              <p>Looking forward to discussing your project!</p>
+              
+              <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                <p><strong>Ariyo Faruq</strong><br>
+                CEO & Founder, HafTech<br>
+                <a href="mailto:ariyofaruq1@gmail.com" style="color: #4361ee;">ariyofaruq1@gmail.com</a><br>
+                <a href="tel:+2348128653553" style="color: #4361ee;">+234 8128 653 553</a></p>
+              </div>
+            </div>
+          `
+        };
+        
+        // Send both emails in background
+        await Promise.all([
+          transporter.sendMail(adminMailOptions),
+          transporter.sendMail(userMailOptions)
+        ]);
+        
+        console.log('Background emails sent successfully');
+        
+      } catch (emailError) {
+        console.error('Background email error:', emailError);
+        // Email failure doesn't affect user experience since response already sent
       }
     });
 
