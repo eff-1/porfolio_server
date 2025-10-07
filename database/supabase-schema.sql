@@ -18,13 +18,21 @@ CREATE INDEX IF NOT EXISTS idx_contact_messages_status ON contact_messages(statu
 -- Enable Row Level Security (RLS)
 ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
 
--- Create policy for inserting messages (anyone can insert)
-CREATE POLICY "Anyone can insert contact messages" ON contact_messages
-  FOR INSERT WITH CHECK (true);
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Anyone can insert contact messages" ON contact_messages;
+DROP POLICY IF EXISTS "Only authenticated users can read messages" ON contact_messages;
+
+-- Create policy for inserting messages (allow anonymous inserts)
+CREATE POLICY "Allow anonymous inserts" ON contact_messages
+  FOR INSERT 
+  TO anon, authenticated
+  WITH CHECK (true);
 
 -- Create policy for reading messages (only authenticated users - for admin)
-CREATE POLICY "Only authenticated users can read messages" ON contact_messages
-  FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Allow authenticated reads" ON contact_messages
+  FOR SELECT 
+  TO authenticated
+  USING (true);
 
 -- Create updated_at trigger
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -35,6 +43,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_contact_messages_updated_at ON contact_messages;
 CREATE TRIGGER update_contact_messages_updated_at 
   BEFORE UPDATE ON contact_messages 
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
