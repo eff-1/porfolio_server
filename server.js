@@ -323,7 +323,8 @@ app.use((error, req, res, next) => {
     details: 'Something went wrong on our end.'
   });
 });
-app.all('*', (req, res) => {
+// 404 handler - must be last
+app.use((req, res) => {
   res.status(404).json({
     error: 'Endpoint not found',
     details: `The requested endpoint ${req.originalUrl} does not exist.`
