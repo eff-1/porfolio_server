@@ -127,9 +127,12 @@ app.get('/api/health', async (req, res) => {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       database: error ? 'ERROR' : 'CONNECTED',
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV || 'development',
+      supabase_url: process.env.SUPABASE_URL ? 'SET' : 'NOT_SET',
+      supabase_key: process.env.SUPABASE_ANON_KEY ? 'SET' : 'NOT_SET'
     });
   } catch (error) {
+    console.error('Health check error:', error);
     res.status(500).json({
       status: 'ERROR',
       timestamp: new Date().toISOString(),
@@ -165,9 +168,11 @@ app.post('/api/contact', contactLimiter, validateContactForm, async (req, res) =
 
     if (error) {
       console.error('Supabase error:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
       return res.status(500).json({
         error: 'Database error',
-        details: 'Failed to store your message. Please try again or contact us directly.'
+        details: 'Failed to store your message. Please try again or contact us directly.',
+        debug: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
 
