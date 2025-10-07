@@ -17,7 +17,7 @@ app.set('trust proxy', 1);
 
 // Initialize Supabase client
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabaseKey = process.env.SUPABASE_SECRET_KEY; // Use service role key for server operations
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Middleware
